@@ -1,11 +1,12 @@
 const { UnauthenticatedError, BadRequestError } = require('../errors')
 const User = require('../models/User')
-const {StatusCodes} = require('http-status-code')
+const { StatusCodes } = require('http-status-codes');
 
-const register = async () => {
+const register = async (req, res) => {
+    // console.log(req.body)
     const user = await User.create({...req.body})
     console.log("892929", user)
-    const token = user.createJWT() // createJWT() it creates token
+    const token = user.createJWT() // createJWT() grabs the token craeated
     console.log("user:",user)
     console.log(token)
     res.status(StatusCodes.CREATED).json({user:{name: user.name}, token})
@@ -34,8 +35,8 @@ const login = async (req, res) => {
     res.send('Login coming soon!')
 }
 
-module.export = 
-{
+module.exports = 
+{   register,
     login,
-    register
+ 
 }

@@ -1,4 +1,8 @@
 const mongoose = require('mongoose') // mongoose is used for schema
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+require('dotenv').config();
+
 
 const UserSchema = mongoose.Schema({
     name:{
@@ -22,5 +26,30 @@ const UserSchema = mongoose.Schema({
         minLength: 6,
     }
 })
+
+// Hash Passsword
+UserSchema.pre('save', async function(){
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt)
+}) 
+
+
+// process.env.JWT_SECRET u still need to look into the all keys generator
+// This function creates a JWT (JSON Web Token) for a user. Here's a breakdown:
+// In simple terms — after a user signs up or logs in, you call user.createJWT() and send the token back to the client. 
+// The client stores it and sends it with every request to prove they're logged in, instead of sending their 
+// password every time.
+UserSchema.methods.createJWT = function(){
+    return jwt.sign({userId: this._id, name: this.name}, //PAYLOAD
+         process.env.JWT_SECRET_KEY, // SECREST KEY
+        {expiresIn: process.env.JWT_LIFE_TIME} // EXPIRES TOKEDN
+)
+}
+
+// compare the passowrd
+UserSchema.methods.comparePassword = async function (candidatePaassword){
+    const isMatch = await bcrypt.compare(candidatePaassword, this.password)
+    return isMatch
+}
 
 module.exports = mongoose.model('User', UserSchema)
