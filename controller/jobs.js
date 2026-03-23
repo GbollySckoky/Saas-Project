@@ -46,8 +46,51 @@ const createJob = async(req, res) => {
    res.status(StatusCodes.CREATED).json({job, message: 'Job Created'})
 }
 
+const updateJob = async (req, res) => {
+    const {
+        body: {company, position},
+        user: {userId}, // middleware id
+        params: {id: jobId} // id params
+    } = req
+
+    if(!company === '' || !position == ""){
+        throw new BadRequestError("Company or Position fields cannot be empty")
+    }
+    const job = await Job.findByIdAndUpdate({
+        _id: jobId, // make query to the db to grab the id ||  _id is coming from mongodb
+        createdBy: userId
+    },
+    req.body,
+    {new: true, runValidators: true}
+    )
+    if(!job){
+        throw new NotFoundError(`No job with ${jobId} found`)
+    }
+    res.status(StatusCodes.OK).json({job, message: 'Job Edited'})
+}
+
+
+const deleteJob = async (req, res) => {
+    const {
+        user: {userId},
+        params: {id: jobId}
+    } = req
+
+    const job = await Job.findByIdAndRemove({
+        _id: jobId,
+        createdBy: userId
+    })
+
+    if (!job) {
+    throw new NotFoundError(`No job with id ${jobId}`)
+  }
+  res.status(StatusCodes.OK).send()
+}
+
 module.exports = {
     getAllJobs,
     getJob,
     createJob,
+    updateJob,
+    deleteJob
 }
