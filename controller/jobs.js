@@ -1,11 +1,11 @@
-const Jobs = require("../models/Jobs")
+const Job = require("../models/Jobs")
 const { StatusCodes } = require('http-status-codes')
 const { BadRequestError, NotFoundError } = require('../errors')
 
 const getAllJobs = async (req, res) => {
     console.log(req)
     // .sort('createdAt') orders them oldest first
-    const jobs = await Jobs.find({createdBy: req.user.userId}).sort("createdAt") //req.user.userId comes from your auth middleware (JWT decoded and attached to req)
+    const jobs = await Job.find({createdBy: req.user.userId}).sort("createdAt") //req.user.userId comes from your auth middleware (JWT decoded and attached to req)
     res.status(StatusCodes.OK).json({jobs, count: jobs.length, message: 'Success'})
 }
 
@@ -43,6 +43,7 @@ const createJob = async(req, res) => {
     */
    req.body.createdBy = req.user.userId
    const job = await Job.create(req.body)
+   console.log("Jobs!!", job)
    res.status(StatusCodes.CREATED).json({job, message: 'Job Created'})
 }
 

@@ -5,7 +5,7 @@ const { UnauthenticatedError } = require('../errors')
 const auth = async (req, res, next) => {
     // check header
     const authHeader = req.headers.authorization
-    if(!authHeader || !authHeader.startWith('Bearer')){// if bearer is not passed to tghe header make the request fail
+    if(!authHeader || !authHeader.startsWith('Bearer')){// if bearer is not passed to tghe header make the request fail
         throw new UnauthenticatedError('Authentication invalid')
     }
     
@@ -20,3 +20,5 @@ const auth = async (req, res, next) => {
     throw new UnauthenticatedError('Authentication invalid')
   }
 }
+
+module.exports = auth
