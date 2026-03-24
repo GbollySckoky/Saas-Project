@@ -3,11 +3,54 @@ const { StatusCodes } = require('http-status-codes')
 const { BadRequestError, NotFoundError } = require('../errors')
 
 const getAllJobs = async (req, res) => {
-    console.log(req)
-    // .sort('createdAt') orders them oldest first
-    const jobs = await Job.find({createdBy: req.user.userId}).sort("createdAt") //req.user.userId comes from your auth middleware (JWT decoded and attached to req)
-    res.status(StatusCodes.OK).json({jobs, count: jobs.length, message: 'Success'})
-}
+  const { position, company, sort, fields, page, limit } = req.query;
+
+  const queryObject = {};
+
+  if (position) {
+    queryObject.position = position;
+  }
+  if (company) {
+    queryObject.company = company;
+  }
+
+  let result = Job.find(queryObject);
+
+  // sort
+  if (sort) {
+    const sortList = sort.split(',').join(' ');
+    result = result.sort(sortList);
+  } else {
+    result = result.sort('createdAt');
+  }
+
+  // fields
+  if (fields) {
+    const fieldsList = fields.split(',').join(' ');
+    result = result.select(fieldsList);
+  }
+
+  // pagination
+  const pageNum = Number(page) || 1;
+  const limitNum = Number(limit) || 10;
+  const skip = (pageNum - 1) * limitNum;
+
+  result = result.skip(skip).limit(limitNum);
+
+  const totalJobs = await Job.countDocuments(queryObject);
+  const numOfPages = Math.ceil(totalJobs / limitNum);
+  const jobs = await result;
+
+  res.status(StatusCodes.OK).json({
+    jobs,
+    count: jobs.length,
+    totalJobs,
+    numOfPages,
+    limit: limitNum,
+    currentPage: pageNum,
+    message: 'Success',
+  });
+};
 
 // userId — from auth middleware (req.user.userId)
 // jobId — from the URL params (req.params.id), e.g. /jobs/abc123
@@ -53,7 +96,6 @@ const updateJob = async (req, res) => {
         user: {userId}, // middleware id
         params: {id: jobId} // id params
     } = req
-
     if(!company === '' || !position == ""){
         throw new BadRequestError("Company or Position fields cannot be empty")
     }
